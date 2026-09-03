@@ -1,0 +1,8 @@
+{
+  "name": "my-esm-project",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "mathjs": "^15.2.0"
+  }
+}
