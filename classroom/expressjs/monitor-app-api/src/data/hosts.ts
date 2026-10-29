@@ -1,4 +1,6 @@
-export const hosts = [
+import type { Host } from '@/types/Host.d.ts';
+
+export const hosts: Host[] = [
   {
     id: 'e4cfb6bb-4431-42a9-b660-d5701b2f49cd',
     name: 'Google DNS',
