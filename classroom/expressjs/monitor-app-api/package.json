@@ -2,7 +2,10 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "db:load": "tsx src/database/load.ts",
+    "db:drop": "rm -f src/database/db.sqlite",
+    "db:reload": "npm run db:drop && npm run db:load"
   },
   "dependencies": {
     "express": "^5.3.0",
