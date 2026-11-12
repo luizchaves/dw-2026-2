@@ -1,51 +1,11 @@
-import { resolve } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaClient } from '@prisma/client';
 
-const dbFile = resolve('src', 'database', 'db.sqlite');
+// A partir do Prisma 7 o client exige um driver adapter.
+const adapter = new PrismaBetterSqlite3({
+  url: process.env.DATABASE_URL as string,
+});
 
-type DbParam = string | number | null;
+const prisma = new PrismaClient({ adapter });
 
-function parseParams(params: DbParam[] | DbParam = []): DbParam[] {
-  return Array.isArray(params) ? params : [params];
-}
-
-function parseRow(row: unknown): Record<string, unknown> | undefined {
-  return row != null && typeof row === 'object'
-    ? { ...(row as Record<string, unknown>) }
-    : undefined;
-}
-
-function createPromiseDatabase(database: DatabaseSync) {
-  return {
-    async run(sql: string, params?: DbParam[] | DbParam) {
-      const result = database
-        .prepare(sql)
-        .run(...(parseParams(params) as never[]));
-
-      return { changes: Number(result.changes) };
-    },
-
-    async get(sql: string, params?: DbParam[] | DbParam) {
-      return parseRow(
-        database.prepare(sql).get(...(parseParams(params) as never[])),
-      );
-    },
-
-    async all(sql: string, params?: DbParam[] | DbParam) {
-      return database
-        .prepare(sql)
-        .all(...(parseParams(params) as never[]))
-        .map(parseRow) as Record<string, unknown>[];
-    },
-
-    async close() {
-      database.close();
-    },
-  };
-}
-
-async function connect() {
-  return createPromiseDatabase(new DatabaseSync(dbFile));
-}
-
-export default { connect };
+export default prisma;

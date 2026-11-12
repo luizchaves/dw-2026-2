@@ -1,138 +1,81 @@
-import { randomUUID } from 'node:crypto';
-
-import Database from '@/database/database.ts';
+import prisma from '@/database/database.ts';
 import type { Host, HostInput } from '@/types/Host.d.ts';
 
-const searchableFields = ['name', 'address'] as const;
+/**
+ * Substitui o SQL escrito à mão da etapa anterior: pede ao Prisma que traga
+ * as tags e as últimas medições resolvidas na mesma ida ao banco.
+ */
+const include = {
+  tags: true,
+  pings: { orderBy: { createdAt: 'desc' }, take: 10 },
+} as const;
 
-type SearchableField = (typeof searchableFields)[number];
-
-function isSearchableField(field: string): field is SearchableField {
-  return (searchableFields as readonly string[]).includes(field);
+/** Tag existente é conectada; tag nova nasce com uma cor neutra. */
+function connectTags(tags: string[] = []) {
+  return {
+    connectOrCreate: tags.map((name) => ({
+      where: { name },
+      create: { name, color: '#64748b' },
+    })),
+  };
 }
 
-async function create({ name, address }: HostInput): Promise<Host> {
+async function create({ name, address, tags }: HostInput): Promise<Host> {
   if (!name || !address) {
     throw new Error('Unable to create host');
   }
 
-  const db = await Database.connect();
-
-  const id = randomUUID();
-
-  const sql = `
-    INSERT INTO
-      hosts (id, name, address)
-    VALUES
-      (?, ?, ?)
-  `;
-
-  await db.run(sql, [id, name, address]);
-
-  const newHost = (await db.get(
-    'SELECT id, name, address FROM hosts WHERE id = ?',
-    [id],
-  )) as Host | undefined;
-
-  await db.close();
-
-  if (!newHost) {
-    throw new Error('Unable to create host');
-  }
-
-  return newHost;
+  return (await prisma.host.create({
+    data: { name, address, tags: connectTags(tags) },
+    include,
+  })) as Host;
 }
 
-async function read(field?: keyof Host, value?: string): Promise<Host[]> {
-  const db = await Database.connect();
+async function read(where?: { name?: string; tag?: string }): Promise<Host[]> {
+  const filters = {
+    ...(where?.name ? { name: { contains: where.name } } : {}),
+    // O filtro por tag atravessa a tabela de junção sem uma linha de SQL.
+    ...(where?.tag ? { tags: { some: { name: where.tag } } } : {}),
+  };
 
-  let hosts: Host[];
-
-  if (field && value) {
-    if (!isSearchableField(field)) {
-      await db.close();
-
-      throw new Error('Unable to read hosts');
-    }
-
-    const sql = `
-      SELECT id, name, address
-      FROM hosts
-      WHERE ${field} LIKE ?
-    `;
-
-    hosts = (await db.all(sql, [`%${value}%`])) as unknown as Host[];
-  } else {
-    const sql = 'SELECT id, name, address FROM hosts';
-
-    hosts = (await db.all(sql)) as unknown as Host[];
-  }
-
-  await db.close();
-
-  return hosts;
+  return (await prisma.host.findMany({ where: filters, include })) as Host[];
 }
 
 async function readById(id: string): Promise<Host> {
-  const db = await Database.connect();
-
-  const sql = `
-    SELECT id, name, address
-    FROM hosts
-    WHERE id = ?
-  `;
-
-  const host = (await db.get(sql, [id])) as Host | undefined;
-
-  await db.close();
+  const host = await prisma.host.findUnique({ where: { id }, include });
 
   if (!host) {
     throw new Error('Host not found');
   }
 
-  return host;
+  return host as Host;
 }
 
 async function update({
   id,
   name,
   address,
+  tags,
 }: HostInput & { id?: string }): Promise<Host> {
   if (!id || !name || !address) {
     throw new Error('Unable to update host');
   }
 
-  const db = await Database.connect();
+  await readById(id);
 
-  const sql = `
-    UPDATE hosts
-    SET name = ?, address = ?
-    WHERE id = ?
-  `;
-
-  const { changes } = await db.run(sql, [name, address, id]);
-
-  await db.close();
-
-  if (changes !== 1) {
-    throw new Error('Host not found');
-  }
-
-  return { id, name, address };
+  return (await prisma.host.update({
+    where: { id },
+    // `set: []` desfaz os vínculos antigos antes de gravar a nova lista.
+    data: { name, address, tags: { set: [], ...connectTags(tags) } },
+    include,
+  })) as Host;
 }
 
 async function remove(id: string): Promise<boolean> {
-  const db = await Database.connect();
+  await readById(id);
 
-  const sql = 'DELETE FROM hosts WHERE id = ?';
-
-  const { changes } = await db.run(sql, [id]);
-
-  await db.close();
-
-  if (changes !== 1) {
-    throw new Error('Host not found');
-  }
+  // `onDelete: Cascade` no schema apaga o histórico de pings junto.
+  await prisma.host.delete({ where: { id } });
 
   return true;
 }

@@ -18,9 +18,9 @@ async function create(req: Request, res: Response) {
 
 async function read(req: Request, res: Response) {
   try {
-    const { name } = req.query as { name?: string };
+    const { name, tag } = req.query as { name?: string; tag?: string };
 
-    const hosts = name ? await Host.read('name', name) : await Host.read();
+    const hosts = await Host.read({ name, tag });
 
     return res.json(hosts);
   } catch {

@@ -3,6 +3,8 @@ import morgan from 'morgan';
 
 import { errorHandler, notFoundHandler } from '@/middlewares/errorHandlers.ts';
 import hostRoutes from '@/routes/hosts.routes.ts';
+import pingRoutes from '@/routes/pings.routes.ts';
+import tagRoutes from '@/routes/tags.routes.ts';
 
 const app = express();
 
@@ -11,6 +13,8 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 app.use('/api', hostRoutes);
+app.use('/api', pingRoutes);
+app.use('/api', tagRoutes);
 
 app.use(notFoundHandler);
 

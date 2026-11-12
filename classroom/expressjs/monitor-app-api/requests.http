@@ -1,5 +1,6 @@
 @host = http://localhost:3000/api
 @createdHostId = {{createdHost.response.body.$.id}}
+@createdTagId = {{createdTag.response.body.$.id}}
 
 ### Create Host
 
@@ -9,7 +10,18 @@ Content-Type: application/json
 
 {
   "name": "Google DNS",
-  "address": "8.8.8.8"
+  "address": "8.8.8.8",
+  "tags": ["infra", "dns"]
+}
+
+### Create Host without tags
+
+POST {{host}}/hosts
+Content-Type: application/json
+
+{
+  "name": "Cloudflare DNS",
+  "address": "1.1.1.1"
 }
 
 ### Create Host without address
@@ -41,6 +53,14 @@ GET {{host}}/hosts/a
 
 GET {{host}}/hosts?name=Google
 
+### Read Hosts by tag
+
+GET {{host}}/hosts?tag=dns
+
+### Read Hosts by name and tag
+
+GET {{host}}/hosts?name=Google&tag=dns
+
 ### Update Host
 
 PUT {{host}}/hosts/{{createdHostId}}
@@ -48,7 +68,8 @@ Content-Type: application/json
 
 {
   "name": "Google Public DNS",
-  "address": "8.8.4.4"
+  "address": "8.8.4.4",
+  "tags": ["dns"]
 }
 
 ### Update Host without address
@@ -69,6 +90,60 @@ Content-Type: application/json
   "name": "Google Public DNS",
   "address": "8.8.4.4"
 }
+
+### Read Pings by Host
+
+GET {{host}}/hosts/{{createdHostId}}/pings
+
+### Read Pings by invalid Host
+
+GET {{host}}/hosts/a/pings
+
+### Create Tag
+
+# @name createdTag
+POST {{host}}/tags
+Content-Type: application/json
+
+{
+  "name": "backup",
+  "color": "#ef4444"
+}
+
+### Create Tag already registered
+
+POST {{host}}/tags
+Content-Type: application/json
+
+{
+  "name": "backup",
+  "color": "#ef4444"
+}
+
+### Create Tag without color
+
+POST {{host}}/tags
+Content-Type: application/json
+
+{
+  "name": "backup"
+}
+
+### Read Tags
+
+GET {{host}}/tags
+
+### Read Tags by name
+
+GET {{host}}/tags?name=pro
+
+### Read Tags by id
+
+GET {{host}}/tags/{{createdTagId}}
+
+### Read Tags by invalid id
+
+GET {{host}}/tags/a
 
 ### Delete Host
 
