@@ -20,29 +20,44 @@ function connectTags(tags: string[] = []) {
   };
 }
 
-async function create({ name, address, tags }: HostInput): Promise<Host> {
+async function create({
+  userId,
+  name,
+  address,
+  tags,
+}: HostInput & { userId: string }): Promise<Host> {
   if (!name || !address) {
     throw new Error('Unable to create host');
   }
 
   return (await prisma.host.create({
-    data: { name, address, tags: connectTags(tags) },
+    data: { userId, name, address, tags: connectTags(tags) },
     include,
   })) as Host;
 }
 
-async function read(where?: { name?: string; tag?: string }): Promise<Host[]> {
+/** Toda consulta é escopada pelo dono: ninguém vê o host de outro usuário. */
+async function read(where: {
+  userId: string;
+  name?: string;
+  tag?: string;
+}): Promise<Host[]> {
   const filters = {
-    ...(where?.name ? { name: { contains: where.name } } : {}),
+    userId: where.userId,
+    ...(where.name ? { name: { contains: where.name } } : {}),
     // O filtro por tag atravessa a tabela de junção sem uma linha de SQL.
-    ...(where?.tag ? { tags: { some: { name: where.tag } } } : {}),
+    ...(where.tag ? { tags: { some: { name: where.tag } } } : {}),
   };
 
   return (await prisma.host.findMany({ where: filters, include })) as Host[];
 }
 
-async function readById(id: string): Promise<Host> {
-  const host = await prisma.host.findUnique({ where: { id }, include });
+/**
+ * O `userId` entra no `where`, e não num `if` depois da consulta: o host de
+ * outro usuário responde 404, como se não existisse.
+ */
+async function readById(id: string, userId: string): Promise<Host> {
+  const host = await prisma.host.findFirst({ where: { id, userId }, include });
 
   if (!host) {
     throw new Error('Host not found');
@@ -53,15 +68,16 @@ async function readById(id: string): Promise<Host> {
 
 async function update({
   id,
+  userId,
   name,
   address,
   tags,
-}: HostInput & { id?: string }): Promise<Host> {
+}: HostInput & { id?: string; userId: string }): Promise<Host> {
   if (!id || !name || !address) {
     throw new Error('Unable to update host');
   }
 
-  await readById(id);
+  await readById(id, userId);
 
   return (await prisma.host.update({
     where: { id },
@@ -71,8 +87,8 @@ async function update({
   })) as Host;
 }
 
-async function remove(id: string): Promise<boolean> {
-  await readById(id);
+async function remove(id: string, userId: string): Promise<boolean> {
+  await readById(id, userId);
 
   // `onDelete: Cascade` no schema apaga o histórico de pings junto.
   await prisma.host.delete({ where: { id } });

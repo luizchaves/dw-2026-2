@@ -1,4 +1,18 @@
 {
+  "users": [
+    {
+      "name": "Ana",
+      "email": "ana@example.com",
+      "password": "senha-de-desenvolvimento",
+      "role": "admin"
+    },
+    {
+      "name": "Bruno",
+      "email": "bruno@example.com",
+      "password": "senha-de-desenvolvimento",
+      "role": "user"
+    }
+  ],
   "tags": [
     { "name": "infra", "color": "#0ea5e9" },
     { "name": "dns", "color": "#10b981" },
@@ -6,11 +20,23 @@
     { "name": "homologação", "color": "#f59e0b" }
   ],
   "hosts": [
-    { "name": "Google DNS", "address": "8.8.8.8", "tags": ["infra", "dns"] },
+    {
+      "name": "Google DNS",
+      "address": "8.8.8.8",
+      "owner": "ana@example.com",
+      "tags": ["infra", "dns"]
+    },
     {
       "name": "Portal da instituição",
       "address": "www.ifpb.edu.br",
+      "owner": "ana@example.com",
       "tags": ["produção"]
+    },
+    {
+      "name": "Servidor de homologação",
+      "address": "homolog.ifpb.edu.br",
+      "owner": "bruno@example.com",
+      "tags": ["homologação"]
     }
   ]
 }

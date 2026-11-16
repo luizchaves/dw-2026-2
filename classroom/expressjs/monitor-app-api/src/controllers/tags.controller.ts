@@ -1,14 +1,19 @@
 import type { Request, Response } from 'express';
 
 import HttpError from '@/errors/HttpError.ts';
+import { validated } from '@/middlewares/validate.ts';
 import Tag from '@/models/Tag.ts';
-import type { TagInput } from '@/types/Tag.d.ts';
+import {
+  createTagSchema,
+  readTagsSchema,
+  showTagSchema,
+} from '@/schemas/tag.schema.ts';
 
 async function create(req: Request, res: Response) {
-  try {
-    const createdTag = await Tag.create(req.body as TagInput);
+  const { body } = validated(req, createTagSchema);
 
-    return res.status(201).json(createdTag);
+  try {
+    return res.status(201).json(await Tag.create(body));
   } catch (error) {
     if (error instanceof Error && error.message.includes('Unique constraint')) {
       throw new HttpError('Tag already exists', 409);
@@ -19,16 +24,16 @@ async function create(req: Request, res: Response) {
 }
 
 async function read(req: Request, res: Response) {
-  const { name } = req.query as { name?: string };
+  const { query } = validated(req, readTagsSchema);
 
-  return res.json(await Tag.read({ name }));
+  return res.json(await Tag.read(query));
 }
 
-async function readById(req: Request<{ id: string }>, res: Response) {
-  try {
-    const { id } = req.params;
+async function readById(req: Request, res: Response) {
+  const { params } = validated(req, showTagSchema);
 
-    return res.json(await Tag.readById(id));
+  try {
+    return res.json(await Tag.readById(params.id));
   } catch {
     throw new HttpError('Tag not found', 404);
   }

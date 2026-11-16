@@ -1,16 +1,122 @@
 @host = http://localhost:3000/api
+@token = {{signin.response.body.$.token}}
 @createdHostId = {{createdHost.response.body.$.id}}
 @createdTagId = {{createdTag.response.body.$.id}}
+
+### Create User
+
+POST {{host}}/users
+Content-Type: application/json
+
+{
+  "name": "Carla",
+  "email": "carla@example.com",
+  "password": "senha-de-desenvolvimento"
+}
+
+### Create User with e-mail already registered (409)
+
+POST {{host}}/users
+Content-Type: application/json
+
+{
+  "name": "Carla",
+  "email": "carla@example.com",
+  "password": "senha-de-desenvolvimento"
+}
+
+### Create User with mismatched confirmation (400)
+
+POST {{host}}/users
+Content-Type: application/json
+
+{
+  "name": "Carla",
+  "email": "carla@example.com",
+  "password": "senha-de-desenvolvimento",
+  "confirmationPassword": "outra-senha"
+}
+
+### Create User with matching confirmation
+
+POST {{host}}/users
+Content-Type: application/json
+
+{
+  "name": "Dani",
+  "email": "dani@example.com",
+  "password": "senha-de-desenvolvimento",
+  "confirmationPassword": "senha-de-desenvolvimento"
+}
+
+### Create User with short password (400)
+
+POST {{host}}/users
+Content-Type: application/json
+
+{
+  "name": "Carla",
+  "email": "carla@example.com",
+  "password": "123"
+}
+
+### Create User with unknown field (400)
+
+POST {{host}}/users
+Content-Type: application/json
+
+{
+  "name": "Carla",
+  "email": "carla@example.com",
+  "password": "senha-de-desenvolvimento",
+  "role": "admin"
+}
+
+### Signin
+
+# @name signin
+POST {{host}}/signin
+Content-Type: application/json
+
+{
+  "email": "ana@example.com",
+  "password": "senha-de-desenvolvimento"
+}
+
+### Signin with wrong password (401)
+
+POST {{host}}/signin
+Content-Type: application/json
+
+{
+  "email": "ana@example.com",
+  "password": "senha-errada"
+}
+
+### Me (users/me)
+
+GET {{host}}/users/me
+Authorization: Bearer {{token}}
+
+### Me (users/me) without token (401)
+
+GET {{host}}/users/me
+
+### Me (users/me) with malformed token (401)
+
+GET {{host}}/users/me
+Authorization: Bearer nao-e-um-token
 
 ### Create Host
 
 # @name createdHost
 POST {{host}}/hosts
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
-  "name": "Google DNS",
-  "address": "8.8.8.8",
+  "name": "Cloudflare DNS",
+  "address": "1.1.1.1",
   "tags": ["infra", "dns"]
 }
 
@@ -18,137 +124,235 @@ Content-Type: application/json
 
 POST {{host}}/hosts
 Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Quad9",
+  "address": "9.9.9.9"
+}
+
+### Create Host already registered for this user (409)
+
+POST {{host}}/hosts
+Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "name": "Cloudflare DNS",
   "address": "1.1.1.1"
 }
 
-### Create Host without address
+### Create Host with address that is neither IPv4 nor a domain (400)
 
 POST {{host}}/hosts
 Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Tentativa de injeção",
+  "address": "8.8.8.8; echo comprometido"
+}
+
+### Create Host with short name (400)
+
+POST {{host}}/hosts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "ab",
+  "address": "1.1.1.1"
+}
+
+### Create Host without address (400)
+
+POST {{host}}/hosts
+Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "name": "Google DNS"
 }
 
-### Create Host without body
+### Create Host trying to choose the owner (400)
 
 POST {{host}}/hosts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Google DNS",
+  "address": "8.8.8.8",
+  "userId": "e4cfb6bb-4431-42a9-b660-d5701b2f49cd"
+}
+
+### Create Host without token (401)
+
+POST {{host}}/hosts
+Content-Type: application/json
+
+{
+  "name": "Google DNS",
+  "address": "8.8.8.8"
+}
 
 ### Read Hosts
 
 GET {{host}}/hosts
+Authorization: Bearer {{token}}
 
 ### Read Hosts by id
 
 GET {{host}}/hosts/{{createdHostId}}
+Authorization: Bearer {{token}}
 
-### Read Hosts by invalid id
+### Read Hosts by malformed id (400)
 
 GET {{host}}/hosts/a
+Authorization: Bearer {{token}}
+
+### Read Hosts by unknown id (404)
+
+GET {{host}}/hosts/00000000-0000-4000-8000-000000000000
+Authorization: Bearer {{token}}
 
 ### Read Hosts by name
 
-GET {{host}}/hosts?name=Google
+GET {{host}}/hosts?name=Cloudflare
+Authorization: Bearer {{token}}
 
 ### Read Hosts by tag
 
 GET {{host}}/hosts?tag=dns
+Authorization: Bearer {{token}}
 
 ### Read Hosts by name and tag
 
-GET {{host}}/hosts?name=Google&tag=dns
+GET {{host}}/hosts?name=Cloudflare&tag=dns
+Authorization: Bearer {{token}}
 
 ### Update Host
 
 PUT {{host}}/hosts/{{createdHostId}}
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
-  "name": "Google Public DNS",
-  "address": "8.8.4.4",
+  "name": "Cloudflare",
+  "address": "1.0.0.1",
   "tags": ["dns"]
 }
 
-### Update Host without address
+### Update Host without address (400)
 
 PUT {{host}}/hosts/{{createdHostId}}
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
-  "name": "Google Public DNS"
+  "name": "Cloudflare"
 }
 
-### Update Host with invalid id
+### Update Host with unknown id (404)
 
-PUT {{host}}/hosts/a
+PUT {{host}}/hosts/00000000-0000-4000-8000-000000000000
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
-  "name": "Google Public DNS",
-  "address": "8.8.4.4"
+  "name": "Cloudflare",
+  "address": "1.0.0.1"
 }
+
+### Check Host now (medição sob demanda)
+
+POST {{host}}/hosts/{{createdHostId}}/pings
+Authorization: Bearer {{token}}
+
+### Check Host now without token (401)
+
+POST {{host}}/hosts/{{createdHostId}}/pings
+
+### Check unknown Host now (404)
+
+POST {{host}}/hosts/00000000-0000-4000-8000-000000000000/pings
+Authorization: Bearer {{token}}
 
 ### Read Pings by Host
 
 GET {{host}}/hosts/{{createdHostId}}/pings
+Authorization: Bearer {{token}}
 
-### Read Pings by invalid Host
+### Read Pings by Host with limit
 
-GET {{host}}/hosts/a/pings
+GET {{host}}/hosts/{{createdHostId}}/pings?limit=2
+Authorization: Bearer {{token}}
+
+### Read Pings by Host with invalid limit (400)
+
+GET {{host}}/hosts/{{createdHostId}}/pings?limit=0
+Authorization: Bearer {{token}}
+
+### Read Pings by unknown Host (404)
+
+GET {{host}}/hosts/00000000-0000-4000-8000-000000000000/pings
+Authorization: Bearer {{token}}
 
 ### Create Tag
 
 # @name createdTag
 POST {{host}}/tags
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "name": "backup",
   "color": "#ef4444"
 }
 
-### Create Tag already registered
+### Create Tag already registered (409)
 
 POST {{host}}/tags
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "name": "backup",
   "color": "#ef4444"
 }
 
-### Create Tag without color
+### Create Tag with invalid color (400)
 
 POST {{host}}/tags
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
-  "name": "backup"
+  "name": "backup",
+  "color": "vermelho"
 }
 
 ### Read Tags
 
 GET {{host}}/tags
+Authorization: Bearer {{token}}
 
 ### Read Tags by name
 
 GET {{host}}/tags?name=pro
+Authorization: Bearer {{token}}
 
 ### Read Tags by id
 
 GET {{host}}/tags/{{createdTagId}}
-
-### Read Tags by invalid id
-
-GET {{host}}/tags/a
+Authorization: Bearer {{token}}
 
 ### Delete Host
 
 DELETE {{host}}/hosts/{{createdHostId}}
+Authorization: Bearer {{token}}
 
-### Delete Host with invalid id
+### Delete Host with unknown id (404)
 
-DELETE {{host}}/hosts/a
+DELETE {{host}}/hosts/00000000-0000-4000-8000-000000000000
+Authorization: Bearer {{token}}

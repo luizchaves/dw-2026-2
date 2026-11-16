@@ -8,15 +8,32 @@ datasource db {
   provider = "sqlite"
 }
 
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  // Guarda o hash Argon2id, nunca a senha em claro.
+  password  String
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  // O usuário sai, os hosts dele saem junto.
+  hosts     Host[]
+}
+
 model Host {
   id        String   @id @default(uuid())
   name      String
   address   String
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
   // Um-para-muitos: cada medição pertence a um host, e o host acumula o histórico.
   pings     Ping[]
   // Muitos-para-muitos: o Prisma cria a tabela de junção sozinho.
   tags      Tag[]    @relation("HostTags")
+
+  // Dois usuários podem monitorar o mesmo host; o mesmo usuário, não duas vezes.
+  @@unique([userId, name])
 }
 
 model Ping {

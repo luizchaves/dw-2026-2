@@ -6,6 +6,7 @@ export interface Host {
   name: string;
   address: string;
   createdAt: Date;
+  userId: string;
   tags: Tag[];
   pings: Ping[];
 }

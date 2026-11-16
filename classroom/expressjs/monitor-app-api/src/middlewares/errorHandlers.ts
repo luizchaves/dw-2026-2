@@ -21,7 +21,11 @@ export const errorHandler = (
   }
 
   if (err instanceof HttpError) {
-    return res.status(err.code).json({ error: err.message });
+    return res.status(err.code).json({
+      error: err.message,
+      // `issues` só aparece quando a validação preencheu os detalhes por campo.
+      ...(err.issues ? { issues: err.issues } : {}),
+    });
   }
 
   console.error(err.stack);
