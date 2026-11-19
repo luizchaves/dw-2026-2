@@ -3,7 +3,10 @@
   "scripts": {
     "start": "tsx --env-file=.env src/index.ts",
     "dev": "tsx watch --env-file=.env src/index.ts",
-    "test": "tsx --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run db:test && NODE_ENV=test tsx --env-file=.env.test --test --test-concurrency=1 \"src/**/*.test.ts\"",
+    "test:coverage": "npm run db:test && NODE_ENV=test tsx --env-file=.env.test --test --experimental-test-coverage --test-concurrency=1 \"src/**/*.test.ts\"",
+    "db:test": "rm -f prisma/db.test.sqlite && NODE_ENV=test prisma migrate deploy",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
@@ -23,8 +26,10 @@
     "@types/express": "^5.0.6",
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.6.5",
+    "@types/supertest": "^7.2.1",
     "@types/swagger-ui-express": "^4.1.8",
     "prisma": "^7.10.1",
+    "supertest": "^7.3.2",
     "typescript": "^7.0.2"
   }
 }

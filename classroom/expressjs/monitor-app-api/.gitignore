@@ -1,4 +1,6 @@
 node_modules
 .env
 prisma/db.sqlite
+prisma/db.test.sqlite
 prisma/db.sqlite-journal
+prisma/db.test.sqlite-journal

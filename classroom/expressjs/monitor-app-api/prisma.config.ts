@@ -1,6 +1,10 @@
 import { defineConfig, env } from 'prisma/config';
 
-process.loadEnvFile();
+/**
+ * Em teste o CLI lê `.env.test`: é o que faz `npm run db:test` migrar o banco
+ * da suíte, e não o de desenvolvimento.
+ */
+process.loadEnvFile(process.env.NODE_ENV === 'test' ? '.env.test' : '.env');
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',

@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'node:url';
+
 import express from 'express';
 import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
@@ -13,7 +15,10 @@ import { startMonitor } from '@/services/monitor.ts';
 
 const app = express();
 
-app.use(morgan('dev'));
+// Nos testes o log de cada requisição só polui a saída do test runner.
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan('dev'));
+}
 
 app.use(express.json());
 
@@ -51,10 +56,25 @@ app.use(notFoundHandler);
 
 app.use(errorHandler);
 
-app.listen(3000, () => {
-  console.log('Monitor API listening on port 3000');
+/**
+ * Só sobe o servidor quando este arquivo é o ponto de entrada do processo.
+ *
+ * É o que permite `import app from '@/index.ts'` nos testes: o supertest
+ * precisa do `app` montado, mas não de uma porta ocupada nem do agendador
+ * medindo hosts no meio da suíte.
+ */
+const isMainModule =
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
 
-  // O agendador sobe depois do servidor: a API responde mesmo que a primeira
-  // rodada de medições ainda esteja em curso.
-  startMonitor();
-});
+if (isMainModule) {
+  app.listen(3000, () => {
+    console.log('Monitor API listening on port 3000');
+
+    // O agendador sobe depois do servidor: a API responde mesmo que a primeira
+    // rodada de medições ainda esteja em curso.
+    startMonitor();
+  });
+}
+
+export default app;
