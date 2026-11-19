@@ -1,0 +1,178 @@
+/*
+ * O CSS do projeto: tema, base e classes de componente.
+ *
+ * Era tudo isto que morava dentro do `index.html`, em um `<script>` de
+ * configuração e um `<style type="text/tailwindcss">` lidos pelo compilador do
+ * Tailwind no navegador. Agora é um arquivo de verdade, compilado no build
+ * pelo plugin do Vite: o navegador recebe CSS pronto, só com as classes que o
+ * projeto realmente usa.
+ */
+
+/* O Tailwind inteiro — tema padrão, reset e utilitários. */
+@import 'tailwindcss';
+
+/*
+ * A fonte vem do npm, não do Google Fonts.
+ *
+ * Antes eram dois `preconnect` e um `<link>` para um servidor de terceiros: a
+ * página só ficava legível se ele respondesse, e cada visita contava para ele
+ * quem estava lendo. Instalada como dependência, a Inter é empacotada junto
+ * com o resto e servida pela mesma origem.
+ */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+
+/*
+ * O modo escuro por classe.
+ *
+ * Por padrão o Tailwind 4 decide o tema pela preferência do sistema
+ * (`prefers-color-scheme`), que o usuário não consegue contrariar dentro do
+ * site. O botão de tema do cabeçalho liga e desliga a classe `dark` no
+ * `<html>` (veja `ui/layout.js`), e esta linha é o que faz o `dark:` responder
+ * a ela. Na versão 3 isto era `darkMode: 'class'` no arquivo de configuração.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * O tema, em variáveis CSS.
+ *
+ * Esta é a mudança de fundo da versão 4: o tema deixou de ser um objeto
+ * JavaScript e virou CSS. Cada `--color-*` daqui gera os utilitários
+ * correspondentes (`bg-brand-600`, `text-brand-600`, `ring-brand-500`...), e
+ * as variáveis ficam disponíveis no navegador — dá para lê-las no DevTools e
+ * usá-las em `var(--color-brand-600)`.
+ */
+@theme {
+  /*
+   * Uma cor de marca só. O resto é neutro — é o que mantém a interface calma e
+   * faz o status do host saltar aos olhos.
+   */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-950: #1e1b4b;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
+
+  /* `--animate-fade-up` é o que cria o utilitário `animate-fade-up`. */
+  --animate-fade-up: fade-up 0.25s ease-out both;
+  --animate-ring: pulse_ring 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes pulse_ring {
+    0% {
+      transform: scale(0.8);
+      opacity: 0.7;
+    }
+    70% {
+      transform: scale(2.2);
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
+  body {
+    @apply bg-white text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100;
+  }
+
+  /* O foco é visível em tudo: navegar por teclado não pode ser adivinhação. */
+  :focus-visible {
+    @apply outline-hidden ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950;
+  }
+
+  ::selection {
+    @apply bg-brand-500/20;
+  }
+}
+
+/*
+ * As classes de componente, em um lugar só.
+ *
+ * O `@apply` deixa o HTML e o JavaScript legíveis — `class="btn btn-primary"`
+ * em vez de quinze utilitários repetidos em cada botão — sem abrir mão dos
+ * tokens do tema. Mudar a altura de todos os campos do app é mudar uma linha.
+ */
+@layer components {
+  .btn {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4
+           text-sm font-medium transition
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-700;
+  }
+  .btn-ghost {
+    @apply text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900
+           dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100;
+  }
+  .btn-outline {
+    @apply border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50
+           dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800;
+  }
+  .btn-danger {
+    @apply bg-rose-600 text-white hover:bg-rose-700;
+  }
+  .btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+  .btn-icon {
+    @apply h-9 w-9 px-0;
+  }
+
+  .card {
+    @apply rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900;
+  }
+
+  .input {
+    @apply h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm
+           text-zinc-900 transition placeholder:text-zinc-400
+           focus:border-brand-500 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20
+           dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-600;
+  }
+  .input-error {
+    @apply border-rose-400 focus:border-rose-500 focus:ring-rose-500/20;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300;
+  }
+  .hint-error {
+    @apply mt-1.5 flex items-start gap-1 text-xs text-rose-600 dark:text-rose-400;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-800;
+  }
+
+  .link {
+    @apply font-medium text-brand-600 underline-offset-4 hover:underline dark:text-brand-400;
+  }
+}

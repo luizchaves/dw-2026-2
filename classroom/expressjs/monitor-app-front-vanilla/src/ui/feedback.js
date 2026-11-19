@@ -74,7 +74,7 @@ export function confirmDialog({
       root,
       html`
         <div
-          class="fixed inset-0 z-40 flex items-end justify-center bg-zinc-950/40 p-4 backdrop-blur-sm sm:items-center"
+          class="fixed inset-0 z-40 flex items-end justify-center bg-zinc-950/40 p-4 backdrop-blur-xs sm:items-center"
           data-overlay
         >
           <div

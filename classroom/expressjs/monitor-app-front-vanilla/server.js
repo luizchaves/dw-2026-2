@@ -1,13 +1,13 @@
 /**
- * Servidor estático de desenvolvimento, sem nenhuma dependência.
+ * Servidor estático do build, sem nenhuma dependência.
  *
- * Por que não abrir o `index.html` direto no navegador? Porque módulos ES
- * (`<script type="module">`) são bloqueados em `file://` pela política de
- * mesma origem: o navegador recusa o `import` antes mesmo de tentar. Um
- * servidor HTTP, por mais simples que seja, resolve.
+ * Desenvolvimento agora é com o Vite (`npm run dev`), que serve os módulos e
+ * troca o que mudou sem recarregar a página. Este arquivo ficou com o outro
+ * papel: servir o `dist/` já compilado — é o que o container faz.
  *
- * É só para desenvolvimento. Em produção, qualquer servidor de arquivos
- * estáticos — Nginx, Caddy, uma CDN — faz o mesmo trabalho melhor.
+ * Serve como demonstração de que o resultado de um build é só um punhado de
+ * arquivos estáticos. Em produção de verdade, Nginx, Caddy ou uma CDN fazem
+ * o mesmo trabalho melhor.
  */
 
 import { createServer } from 'node:http';
@@ -16,7 +16,9 @@ import { stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 
 const PORT = Number(process.env.PORT ?? 5173);
-const ROOT = resolve(import.meta.dirname);
+
+// A raiz é o `dist/`: sem `npm run build` antes, não há o que servir.
+const ROOT = resolve(import.meta.dirname, 'dist');
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -28,6 +30,8 @@ const TYPES = {
   '.png': 'image/png',
   '.webp': 'image/webp',
   '.woff2': 'font/woff2',
+  // O @fontsource publica os dois formatos; o .woff é o retrato do navegador antigo.
+  '.woff': 'font/woff',
 };
 
 createServer(async (req, res) => {
@@ -61,6 +65,6 @@ createServer(async (req, res) => {
 
   createReadStream(file).pipe(res);
 }).listen(PORT, () => {
-  console.log(`Front rodando em http://localhost:${PORT}`);
+  console.log(`Front (build) rodando em http://localhost:${PORT}`);
   console.log('A API precisa estar no ar em http://localhost:3000');
 });

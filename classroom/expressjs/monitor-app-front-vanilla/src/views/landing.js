@@ -95,7 +95,7 @@ const preview = () => html`
         ${[40, 55, 35, 70, 45, 60, 30, 65, 50, 75, 42, 58, 38, 68, 48].map(
           (height) => html`
             <span
-              class="flex-1 rounded-sm bg-brand-500/25 dark:bg-brand-500/30"
+              class="flex-1 rounded-xs bg-brand-500/25 dark:bg-brand-500/30"
               style="height: ${height}%"
             ></span>
           `,
@@ -114,7 +114,7 @@ export function landingView(outlet) {
     html`
       <div class="min-h-screen">
         <header
-          class="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/80"
+          class="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/80 backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/80"
         >
           <div
             class="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6"

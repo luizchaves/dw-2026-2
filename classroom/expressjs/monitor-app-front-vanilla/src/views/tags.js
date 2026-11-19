@@ -30,7 +30,7 @@ const CORES = [
 const tagCard = (tag, total) => html`
   <a
     href="#/app?tag=${encodeURIComponent(tag.name)}"
-    class="card flex items-center gap-3 p-4 transition hover:border-zinc-300 hover:shadow-sm dark:hover:border-zinc-700"
+    class="card flex items-center gap-3 p-4 transition hover:border-zinc-300 hover:shadow-xs dark:hover:border-zinc-700"
   >
     <span
       class="h-9 w-9 shrink-0 rounded-lg"

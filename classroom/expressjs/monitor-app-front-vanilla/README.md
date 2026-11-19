@@ -1,9 +1,16 @@
 # monitor-app-front-vanilla
 
 Front-end da [monitor-app-api](../monitor-app-api) em JavaScript puro — sem
-framework, sem bundler, sem etapa de build. Tailwind CSS pelo CDN.
+framework. O Vite cuida das dependências e do build; o Tailwind CSS 4 entra
+como plugin dele.
 
 ## Rodando
+
+Uma vez, as dependências:
+
+```bash
+npm install
+```
 
 São dois servidores. Primeiro a API, em um terminal:
 
@@ -18,12 +25,20 @@ npm run dev
 ```
 
 O front sobe em <http://localhost:5173> e fala com a API em
-<http://localhost:3000>.
+<http://localhost:3000>. Salvar um arquivo atualiza a página na hora, sem
+recarregar e sem perder o que estava na tela.
+
+Para gerar a versão de produção em `dist/` e servi-la com o `server.js`:
+
+```bash
+npm run build && npm start
+```
 
 > **Por que não abrir o `index.html` direto?** Módulos ES são bloqueados em
 > `file://` pela política de mesma origem — o navegador recusa o `import` antes
-> mesmo de tentar. O `server.js` existe só para isso: servir os arquivos por
-> HTTP. São 60 linhas e nenhuma dependência.
+> mesmo de tentar. Era para isso que existia o `server.js`; hoje o Vite faz
+> isso e muito mais em desenvolvimento, e o `server.js` ficou com o papel de
+> servir o `dist/` compilado.
 
 Para apontar para outra API, sem editar código, no console do navegador:
 
@@ -44,9 +59,11 @@ localStorage.apiUrl = 'http://192.168.0.10:3000/api';
 ## Como está organizado
 
 ```
-index.html         tema do Tailwind e classes de componente (.btn, .card, .input)
-server.js          servidor estático de desenvolvimento
+index.html         o esqueleto da página, e só
+vite.config.js     o Vite e o plugin do Tailwind
+server.js          serve o dist/ compilado (é o que roda no container)
 src/
+  style.css        tema, classes de componente (.btn, .card, .input) e a fonte
   main.js          registra as rotas e dá a partida
   router.js        roteador por hash, com rotas protegidas
   api.js           a única porta de saída para a API
@@ -55,7 +72,7 @@ src/
   views/           uma função por tela
 ```
 
-Quatro decisões que valem a leitura do código:
+Cinco decisões que valem a leitura do código:
 
 **Nenhuma tela chama `fetch`.** Tudo passa pelo `api.js`, que é onde o token é
 anexado, o erro `{ error, issues }` vira um `ApiError` e o 401 encerra a
@@ -74,6 +91,17 @@ para que os listeners sejam descartados junto com ele.
 **A rota protegida é conforto, não segurança.** Esconder a tela não protege
 dado nenhum — quem protege é a API, que exige o token em toda rota. O roteador
 só evita mostrar um painel que cairia em 401.
+
+**As dependências são declaradas, não copiadas.** O Tailwind já foi um
+`<script>` de CDN e já foi um arquivo de 400 KB dentro do repositório. As duas
+formas quebram de jeitos diferentes: a primeira depende de um servidor de
+terceiros continuar no ar e com o mesmo contrato — foi assim que a página
+perdeu o estilo quando o `cdn.tailwindcss.com` parou de mandar
+`Access-Control-Allow-Origin` —, e a segunda não tem como ser atualizada sem
+alguém lembrar de baixar de novo. Com o Vite, a versão está no `package.json`,
+fixada no `package-lock.json`, e o build entrega ao navegador só o CSS das
+classes que o projeto usa: 54 KB em vez do compilador inteiro. O mesmo vale
+para a fonte, que vem do npm em vez do Google Fonts.
 
 ## CORS
 

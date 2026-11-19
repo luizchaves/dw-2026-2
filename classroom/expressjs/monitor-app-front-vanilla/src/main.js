@@ -6,6 +6,14 @@
  * estado global: o que uma tela precisa, ela busca na API ao abrir.
  */
 
+/*
+ * O CSS importado pelo JavaScript parece estranho, e é proposital: é assim que
+ * o Vite descobre que o estilo faz parte desta aplicação. Em desenvolvimento
+ * ele injeta na página e troca a quente; no build, extrai para um `.css` com
+ * hash no nome e pendura o `<link>` no `index.html` gerado.
+ */
+import './style.css';
+
 import { route, startRouter } from './router.js';
 import { session } from './session.js';
 import { qs } from './ui/dom.js';

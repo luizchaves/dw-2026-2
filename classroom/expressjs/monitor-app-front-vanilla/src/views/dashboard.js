@@ -83,7 +83,7 @@ export function sparkline(pings, { height = 'h-8' } = {}) {
           : 100;
 
         return html`<span
-          class="flex-1 rounded-sm ${ping.success
+          class="flex-1 rounded-xs ${ping.success
             ? 'bg-brand-500/30 dark:bg-brand-500/40'
             : 'bg-rose-500/60'}"
           style="height: ${altura}%"
@@ -112,14 +112,14 @@ const hostCard = (host) => {
 
   return html`
     <article
-      class="card group flex flex-col p-5 transition hover:border-zinc-300 hover:shadow-sm dark:hover:border-zinc-700"
+      class="card group flex flex-col p-5 transition hover:border-zinc-300 hover:shadow-xs dark:hover:border-zinc-700"
     >
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
           <h3 class="truncate font-medium leading-tight">
             <a
               href="#/app/hosts/${host.id}"
-              class="rounded after:absolute after:inset-0"
+              class="rounded-sm after:absolute after:inset-0"
               >${host.name}</a
             >
           </h3>
