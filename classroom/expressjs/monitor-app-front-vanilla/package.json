@@ -1,0 +1,10 @@
+{
+  "name": "monitor-app-front-vanilla",
+  "private": true,
+  "type": "module",
+  "description": "Front-end em JavaScript puro para a monitor-app-api",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  }
+}

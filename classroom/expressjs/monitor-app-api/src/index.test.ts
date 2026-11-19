@@ -74,6 +74,34 @@ describe('documentação da API', () => {
   });
 });
 
+describe('CORS', () => {
+  it('libera a origem do front em toda resposta', async () => {
+    const response = await request(app).get('/api/docs.json');
+
+    assert.equal(response.headers['access-control-allow-origin'], '*');
+  });
+
+  it('responde o preflight com 204 e os cabeçalhos permitidos', async () => {
+    const response = await request(app)
+      .options('/api/hosts')
+      .set('Origin', 'http://localhost:5173')
+      .set('Access-Control-Request-Method', 'POST')
+      .set('Access-Control-Request-Headers', 'authorization, content-type');
+
+    // Sem `Authorization` na lista, o navegador barraria toda rota autenticada
+    // antes mesmo de a requisição real sair.
+    assert.equal(response.status, 204);
+    assert.match(response.headers['access-control-allow-headers'], /Authorization/i);
+    assert.match(response.headers['access-control-allow-methods'], /PUT/);
+  });
+
+  it('o preflight não exige token', async () => {
+    const response = await request(app).options('/api/hosts');
+
+    assert.equal(response.status, 204);
+  });
+});
+
 describe('rotas inexistentes e erros', () => {
   it('devolve 404 com corpo JSON para caminho desconhecido', async () => {
     const response = await request(app).get('/nao-existe');

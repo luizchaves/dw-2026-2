@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="pt-BR" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Monitor — monitoramento de hosts</title>
+    <meta
+      name="description"
+      content="Acompanhe a disponibilidade dos seus hosts com medições automáticas de ping."
+    />
+
+    <!--
+      O Tailwind pelo CDN, como no exemplo da aula — mas com a versão fixa e
+      com `integrity`.
+
+      `https://cdn.tailwindcss.com` sem versão entrega sempre a mais recente:
+      uma atualização pode mudar o visual do projeto de um dia para o outro,
+      sem ninguém ter mexido em nada. O `integrity` é a outra metade: o
+      navegador confere o hash do arquivo baixado e **recusa executá-lo** se
+      não bater, o que protege de um CDN comprometido.
+
+      Este CDN compila as classes no navegador, então serve para aula e
+      protótipo. Em produção, o caminho é o Tailwind CLI gerando um .css.
+    -->
+    <script
+      src="https://cdn.tailwindcss.com/3.4.17"
+      integrity="sha384-igm5BeiBt36UU4gqwWS7imYmelpTsZlQ45FZf+XBn9MuJbn4nQr7yx1yFydocC/K"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              // Uma cor de marca só. O resto é neutro — é o que mantém a
+              // interface calma e faz o status do host saltar aos olhos.
+              brand: {
+                50: '#eef2ff',
+                100: '#e0e7ff',
+                200: '#c7d2fe',
+                400: '#818cf8',
+                500: '#6366f1',
+                600: '#4f46e5',
+                700: '#4338ca',
+                950: '#1e1b4b',
+              },
+            },
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+              mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
+            },
+            keyframes: {
+              'fade-up': {
+                from: { opacity: '0', transform: 'translateY(6px)' },
+                to: { opacity: '1', transform: 'none' },
+              },
+              pulse_ring: {
+                '0%': { transform: 'scale(.8)', opacity: '.7' },
+                '70%': { transform: 'scale(2.2)', opacity: '0' },
+                '100%': { opacity: '0' },
+              },
+            },
+            animation: {
+              'fade-up': 'fade-up .25s ease-out both',
+              ring: 'pulse_ring 2s cubic-bezier(0,0,.2,1) infinite',
+            },
+          },
+        },
+      };
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!--
+      As classes de componente ficam aqui, em um lugar só.
+
+      O `@apply` do Tailwind deixa o HTML e o JavaScript legíveis — `class="btn
+      btn-primary"` em vez de quinze utilitários repetidos em cada botão — sem
+      abrir mão dos tokens do tema. Mudar a altura de todos os campos do app é
+      mudar uma linha.
+    -->
+    <style type="text/tailwindcss">
+      @layer base {
+        :root {
+          color-scheme: light dark;
+        }
+        body {
+          @apply bg-white text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100;
+        }
+        /* O foco é visível em tudo: navegar por teclado não pode ser adivinhação. */
+        :focus-visible {
+          @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950;
+        }
+        ::selection {
+          @apply bg-brand-500/20;
+        }
+      }
+
+      @layer components {
+        .btn {
+          @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 h-10
+                 text-sm font-medium transition
+                 disabled:cursor-not-allowed disabled:opacity-50;
+        }
+        .btn-primary {
+          @apply bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-700;
+        }
+        .btn-ghost {
+          @apply text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900
+                 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100;
+        }
+        .btn-outline {
+          @apply border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50
+                 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800;
+        }
+        .btn-danger {
+          @apply bg-rose-600 text-white hover:bg-rose-700;
+        }
+        .btn-sm {
+          @apply h-8 px-3 text-xs;
+        }
+        .btn-icon {
+          @apply h-9 w-9 px-0;
+        }
+
+        .card {
+          @apply rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900;
+        }
+
+        .input {
+          @apply h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm
+                 text-zinc-900 placeholder:text-zinc-400 transition
+                 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20
+                 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-600;
+        }
+        .input-error {
+          @apply border-rose-400 focus:border-rose-500 focus:ring-rose-500/20;
+        }
+        .label {
+          @apply mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300;
+        }
+        .hint-error {
+          @apply mt-1.5 flex items-start gap-1 text-xs text-rose-600 dark:text-rose-400;
+        }
+
+        .badge {
+          @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+        }
+
+        .skeleton {
+          @apply animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-800;
+        }
+
+        .link {
+          @apply font-medium text-brand-600 underline-offset-4 hover:underline dark:text-brand-400;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Atalho para quem navega por teclado pular a navegação repetida. -->
+    <a
+      href="#conteudo"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-sm focus:text-white"
+      >Pular para o conteúdo</a
+    >
+
+    <div id="app"></div>
+
+    <!-- Avisos curtos: sucesso, erro, confirmação de ação. -->
+    <div
+      id="toasts"
+      class="pointer-events-none fixed bottom-4 right-4 z-50 flex w-[22rem] max-w-[calc(100vw-2rem)] flex-col gap-2"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    <div id="modal-root"></div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

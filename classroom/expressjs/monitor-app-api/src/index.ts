@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
 
 import swaggerSpec from '@/docs/swagger.ts';
+import { cors } from '@/middlewares/cors.ts';
 import { errorHandler, notFoundHandler } from '@/middlewares/errorHandlers.ts';
 import authRoutes from '@/routes/auth.routes.ts';
 import hostRoutes from '@/routes/hosts.routes.ts';
@@ -19,6 +20,9 @@ const app = express();
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
+
+// Antes de tudo: o preflight precisa ser respondido mesmo em rota autenticada.
+app.use(cors);
 
 app.use(express.json());
 
