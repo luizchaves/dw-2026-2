@@ -3,6 +3,10 @@
 @createdHostId = {{createdHost.response.body.$.id}}
 @createdTagId = {{createdTag.response.body.$.id}}
 
+### API docs (Swagger UI em http://localhost:3000/api/docs)
+
+GET {{host}}/docs.json
+
 ### Create User
 
 POST {{host}}/users

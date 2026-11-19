@@ -1,6 +1,8 @@
 import express from 'express';
 import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
 
+import swaggerSpec from '@/docs/swagger.ts';
 import { errorHandler, notFoundHandler } from '@/middlewares/errorHandlers.ts';
 import authRoutes from '@/routes/auth.routes.ts';
 import hostRoutes from '@/routes/hosts.routes.ts';
@@ -14,6 +16,30 @@ const app = express();
 app.use(morgan('dev'));
 
 app.use(express.json());
+
+/**
+ * A especificação crua, para importar em outras ferramentas (Insomnia,
+ * Postman, geradores de cliente).
+ */
+app.get('/api/docs.json', (_req, res) => {
+  res.json(swaggerSpec);
+});
+
+/**
+ * A documentação interativa.
+ *
+ * Vem antes das rotas da API só por organização — `/api/docs` não colide com
+ * nenhuma delas. `persistAuthorization` mantém o token entre recarregamentos
+ * da página, para não precisar colar de novo a cada teste.
+ */
+app.use(
+  '/api/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: 'Monitor App API',
+    swaggerOptions: { persistAuthorization: true },
+  }),
+);
 
 app.use('/api', userRoutes);
 app.use('/api', authRoutes);
