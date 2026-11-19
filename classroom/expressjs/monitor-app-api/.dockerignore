@@ -1,0 +1,20 @@
+# O que NÃO entra na imagem.
+#
+# Vale por dois motivos. O primeiro é tamanho: `node_modules` da máquina tem
+# binários compilados para o macOS, inúteis dentro de um Linux — o `npm ci` do
+# Dockerfile instala os certos. O segundo é segredo: o `.env` tem a chave do
+# JWT, e o que entra na imagem vai junto para onde a imagem for publicada.
+node_modules
+.env
+.env.test
+
+# O banco de desenvolvimento fica na máquina; o do container nasce da migração.
+prisma/db.sqlite
+prisma/db.test.sqlite
+prisma/*.sqlite-journal
+
+.git
+.gitignore
+Dockerfile
+.dockerignore
+requests.http

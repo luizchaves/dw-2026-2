@@ -1,0 +1,84 @@
+# Como as duas aplicações sobem juntas.
+#
+# Sem Compose seriam dois `docker build` e dois `docker run` com as portas, as
+# variáveis e o volume escritos na mão, a cada vez. Aqui isso fica em arquivo,
+# versionado, e a aula inteira começa com um comando:
+#
+#   docker compose up --build
+#
+# A API responde em http://localhost:3000 (docs em /api/docs) e o front em
+# http://localhost:5173.
+
+services:
+  api:
+    # `build` em vez de `image`: a imagem não vem de um registro, é construída
+    # a partir do Dockerfile daquela pasta.
+    build: ./monitor-app-api
+
+    # `host:container`. A porta da esquerda é a da sua máquina; a da direita, a
+    # de dentro do container. Sem esta linha a API sobe e ninguém alcança.
+    ports:
+      - '3000:3000'
+
+    # A configuração vem do mesmo `.env` que a API já usa fora do container —
+    # inclusive o JWT_SECRET. Escrever o segredo aqui o colocaria no Git, que é
+    # exatamente o que o `.env` (ignorado) existe para evitar. Quem clona o
+    # repositório começa com `cp .env.example .env`, uma vez.
+    #
+    # O arquivo não entra na imagem (veja o `.dockerignore`): ele é lido pelo
+    # Compose, na sua máquina, e repassado ao processo. A imagem continua sem
+    # segredo nenhum, e a mesma imagem serve para qualquer ambiente.
+    env_file:
+      - ./monitor-app-api/.env
+
+    environment:
+      # Precedência: o que está aqui vence o `env_file`, que vence o `ENV` do
+      # Dockerfile. Esta linha não é redundante — sem ela, o
+      # `DATABASE_URL="file:./prisma/db.sqlite"` do `.env` entraria no lugar do
+      # caminho do volume, e o banco voltaria a morrer com o container.
+      DATABASE_URL: file:/app/data/db.sqlite
+
+    # O ponto que separa "rodar" de "rodar de verdade".
+    #
+    # O sistema de arquivos do container é descartável: `docker compose down`
+    # leva o banco embora e os usuários cadastrados em aula vão com ele. O
+    # volume nomeado vive fora do container, e o SQLite passa a sobreviver a
+    # reconstruções da imagem.
+    volumes:
+      - api-data:/app/data
+
+    # Um jeito de o Docker saber se a API está no ar, e não apenas se o
+    # processo existe. Aparece como "healthy" no `docker compose ps`.
+    #
+    # As aspas em volta do JavaScript não são enfeite: o `? 0 : 1` tem um
+    # "dois-pontos e espaço", que em YAML abre um mapa. Sem elas, o Compose
+    # recusa o arquivo.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3000/api/docs.json').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      # A primeira rodada de migração pode demorar; antes disso, falha sem contar.
+      start_period: 20s
+      retries: 3
+
+  front:
+    build: ./monitor-app-front-vanilla
+
+    ports:
+      - '5173:5173'
+
+    # Garante a ordem de partida, nada além disso — e aqui ela é só conforto.
+    #
+    # O front é servidor de arquivos estáticos: ele não fala com a API. Quem
+    # fala é o JavaScript no SEU navegador, que não está na rede do Compose e
+    # por isso busca `http://localhost:3000/api` — a porta publicada acima,
+    # não o endereço `api:3000`. Trocar isso por `api` quebraria o front.
+    depends_on:
+      - api
+
+volumes:
+  api-data:

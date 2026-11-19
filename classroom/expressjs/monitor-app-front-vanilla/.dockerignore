@@ -1,0 +1,14 @@
+# O que NÃO entra no contexto do build.
+#
+# `node_modules` vem da máquina, com binários do sistema de fora; o `npm ci`
+# do Dockerfile instala os certos para o Linux do container. `dist` é gerado
+# lá dentro — mandar o daqui só atrasaria o envio e poderia servir um build
+# velho.
+node_modules
+dist
+
+.git
+.gitignore
+Dockerfile
+.dockerignore
+README.md
